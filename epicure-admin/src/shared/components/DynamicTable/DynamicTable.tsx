@@ -20,13 +20,20 @@ import {
 } from "./DynamicTable.style";
 import { IDish, IRestaurant } from "../../../data/types";
 import colors from "../../../data/colors";
+import Delete from "../Action/Delete";
+import resources from "../../../resources/resources.json";
+import { ITableData } from "../Dashboard/Dashboard.type";
 
-const DynamicTable: React.FC<IDynamicTableProps> = ({ fields, data }) => {
+const DynamicTable: React.FC<IDynamicTableProps> = ({
+  fields,
+  data,
+  deleteDataCallback,
+}) => {
   const getStatusColor = (status: string) => {
     return status === "active" ? colors.green : colors.red;
   };
 
-  const renderTableCellContent = (field: string, rowData: any) => {
+  const renderTableCellContent = (field: string, rowData: ITableData) => {
     switch (field) {
       case "status":
         return (
@@ -92,6 +99,7 @@ const DynamicTable: React.FC<IDynamicTableProps> = ({ fields, data }) => {
                 {capitalizeFirstLetter(field)}
               </TableCell>
             ))}
+            <TableCell>{resources.Action}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -102,6 +110,9 @@ const DynamicTable: React.FC<IDynamicTableProps> = ({ fields, data }) => {
                   {renderTableCellContent(field, row)}
                 </TableCell>
               ))}
+              <TableCell>
+                <Delete item={row} deleteDataCallback={deleteDataCallback} />
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

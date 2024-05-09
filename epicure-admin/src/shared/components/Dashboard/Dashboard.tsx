@@ -19,6 +19,7 @@ import colors from "../../../data/colors";
 import { useNavigate, useParams } from "react-router-dom";
 import AddEntryForm from "../Add/Add";
 import { ROUTES } from "../../../shared/constants/ROUTES.dashboard";
+import { deleteData } from "../../../services/delete";
 
 export default function Dashboard() {
   const [activeTable, setActiveTable] = useState<string>("");
@@ -78,6 +79,15 @@ export default function Dashboard() {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteData(activeTable, id, BASE_URL);
+      fetchData(activeTable, setData, BASE_URL);
+    } catch (error) {
+      console.error("Error deleting data:", error);
+    }
+  };
+
   const filteredFields = fields.filter(
     (field) => field !== "_id" && field !== "__v"
   );
@@ -102,7 +112,9 @@ export default function Dashboard() {
         {activeTable && (
           <>
             <ToolbarContainer>
-              <Button onClick={handleBackButtonClick}>&lt;- Back</Button>
+              <Button onClick={handleBackButtonClick}>
+                &lt;{resources.Back}
+              </Button>
               <Button onClick={handleOpenModal}>{resources.AddEntry}</Button>
             </ToolbarContainer>
             <UpperCaseTypography variant="h4" paragraph>
@@ -111,7 +123,11 @@ export default function Dashboard() {
             <Typography paragraph style={{ color: colors.textSecondary }}>
               {data.length} {resources.entries}
             </Typography>
-            <DynamicTable fields={filteredFields} data={data} />
+            <DynamicTable
+              fields={filteredFields}
+              data={data}
+              deleteDataCallback={handleDelete}
+            />
           </>
         )}
         {!activeTable && (

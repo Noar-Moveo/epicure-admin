@@ -5,5 +5,10 @@
   "collection": "COLLECTION TYPES",
   "AddEntry": "+ Create New Entry",
   "Back": "- Back",
-  "Save": "Save"
+  "Save": "Save",
+  "DeleteQuestion": "Are you sure you want to delete this item?",
+  "ConfirmDelete": "Confirm Deletion",
+  "Action": "Action",
+  "Yes": "Yes",
+  "No": "No"
 }

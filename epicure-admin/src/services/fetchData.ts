@@ -10,6 +10,7 @@ export const fetchData = async (
       const response = await axios.get(
         `${BASE_URL}/${activeTable.toLowerCase()}`
       );
+      
       setData(response.data);
     } catch (error) {
       console.error(`Error fetching ${activeTable}:`, error);

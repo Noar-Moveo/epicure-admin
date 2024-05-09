@@ -12,7 +12,10 @@ export const fetchFields = async (
       const response = await axios.get(
         `${BASE_URL}/fields/${activeTable.toLowerCase()}`
       );
-      setFields(response.data);
+
+      const fieldsData = response.data;
+
+      setFields(fieldsData);
     } catch (error) {
       console.error("Error fetching fields:", error);
     }
