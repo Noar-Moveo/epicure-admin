@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { CssBaseline, Toolbar, Typography } from "@mui/material";
+import { CssBaseline, Toolbar, Typography, Button } from "@mui/material";
 import NavigationBar from "../NavigationBar/NavigationBar";
 import DynamicTable from "../DynamicTable/DynamicTable";
 import { fetchCollectionNames } from "../../../services/fetchCollection";
@@ -19,7 +19,7 @@ import {
 } from "./Dashboard.style";
 import { TableData } from "./Dashboard.type";
 import colors from "../../../data/colors";
-import { useNavigate, useParams } from "react-router-dom"; 
+import { useNavigate, useParams } from "react-router-dom";
 
 export default function Dashboard() {
   const [activeTable, setActiveTable] = useState<string>("");
@@ -43,16 +43,28 @@ export default function Dashboard() {
       setActiveTable(params.collection);
       fetchFields(params.collection, setFields);
       fetchData(params.collection, setData, BASE_URL);
+    } else {
+      setActiveTable('');
+      setFields([]);
+      setData([]);
     }
   }, [params.collection]);
 
   const handleListItemClick = (
     _event: React.MouseEvent<HTMLDivElement>,
-    index: string
+    collection: string
   ) => {
-    setActiveTable(index);
-    navigate(`/dashboard/${index}`);
+    setActiveTable(collection);
+    navigate(`/dashboard/${collection}`);
+    console.log("Navigate to Collection");
   };
+
+  const handleBackButtonClick = () => {
+    navigate("/dashboard/");
+    console.log("Navigate to Dashboard");
+  };
+
+
 
   return (
     <MainContainer>
@@ -73,6 +85,7 @@ export default function Dashboard() {
         <Toolbar />
         {activeTable && (
           <>
+            <Button onClick={handleBackButtonClick}>&lt;- Back</Button>
             <UpperCaseTypography variant="h4" paragraph>
               {activeTable.toUpperCase()}
             </UpperCaseTypography>
