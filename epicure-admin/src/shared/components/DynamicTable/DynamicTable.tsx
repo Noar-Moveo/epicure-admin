@@ -18,6 +18,7 @@ import {
   tableStyle,
   flexContainerStyle,
 } from "./DynamicTable.style";
+import { Dish, Restaurant } from "../../../data/types";
 import colors from "../../../data/colors";
 
 const DynamicTable: React.FC<DynamicTableProps> = ({ fields, data }) => {
@@ -37,13 +38,35 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ fields, data }) => {
           </div>
         );
       case "restaurants":
+        return (
+          Array.isArray(rowData[field]) && (
+            <ul>
+              {rowData[field].map(
+                (restaurant: Restaurant, restaurantIndex: number) => (
+                  <li key={restaurantIndex}>{restaurant.name}</li>
+                )
+              )}
+            </ul>
+          )
+        );
       case "ingredients":
+        return (
+          Array.isArray(rowData[field]) && (
+            <ul>
+              {rowData[field].map(
+                (ingredient: string, ingredientIndex: number) => (
+                  <li key={ingredientIndex}>{ingredient}</li>
+                )
+              )}
+            </ul>
+          )
+        );
       case "dishes":
         return (
           Array.isArray(rowData[field]) && (
             <ul>
-              {rowData[field].map((item: any, index: number) => (
-                <li key={index}>{item.name}</li>
+              {rowData[field].map((dish: Dish, dishIndex: number) => (
+                <li key={dishIndex}>{dish.name}</li>
               ))}
             </ul>
           )
