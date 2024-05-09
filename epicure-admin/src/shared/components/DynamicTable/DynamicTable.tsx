@@ -18,7 +18,6 @@ import {
   tableStyle,
   flexContainerStyle,
 } from "./DynamicTable.style";
-import { Dish, Restaurant } from "../../../data/types";
 import colors from "../../../data/colors";
 
 const DynamicTable: React.FC<DynamicTableProps> = ({ fields, data }) => {
@@ -38,35 +37,13 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ fields, data }) => {
           </div>
         );
       case "restaurants":
-        return (
-          Array.isArray(rowData[field]) && (
-            <ul>
-              {rowData[field].map(
-                (restaurant: Restaurant, restaurantIndex: number) => (
-                  <li key={restaurantIndex}>{restaurant.name}</li>
-                )
-              )}
-            </ul>
-          )
-        );
       case "ingredients":
-        return (
-          Array.isArray(rowData[field]) && (
-            <ul>
-              {rowData[field].map(
-                (ingredient: string, ingredientIndex: number) => (
-                  <li key={ingredientIndex}>{ingredient}</li>
-                )
-              )}
-            </ul>
-          )
-        );
       case "dishes":
         return (
           Array.isArray(rowData[field]) && (
             <ul>
-              {rowData[field].map((dish: Dish, dishIndex: number) => (
-                <li key={dishIndex}>{dish.name}</li>
+              {rowData[field].map((item: any, index: number) => (
+                <li key={index}>{item.name}</li>
               ))}
             </ul>
           )
@@ -82,12 +59,16 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ fields, data }) => {
     }
   };
 
+  const filteredFields = fields.filter(
+    (field) => field !== "_id" && field !== "__v"
+  );
+
   return (
     <TableContainer component={Paper}>
       <Table sx={tableStyle}>
         <TableHead>
           <TableRow>
-            {fields.map((field, index) => (
+            {filteredFields.map((field, index) => (
               <TableCell key={index} style={tableCellStyle}>
                 {capitalizeFirstLetter(field)}
               </TableCell>
@@ -97,7 +78,7 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ fields, data }) => {
         <TableBody>
           {data.map((row, rowIndex) => (
             <TableRow key={rowIndex}>
-              {fields.map((field, cellIndex) => (
+              {filteredFields.map((field, cellIndex) => (
                 <TableCell key={cellIndex}>
                   {renderTableCellContent(field, row)}
                 </TableCell>
