@@ -44,7 +44,7 @@ export default function Dashboard() {
       fetchFields(params.collection, setFields);
       fetchData(params.collection, setData, BASE_URL);
     } else {
-      setActiveTable('');
+      setActiveTable("");
       setFields([]);
       setData([]);
     }
@@ -63,8 +63,6 @@ export default function Dashboard() {
     navigate("/dashboard/");
     console.log("Navigate to Dashboard");
   };
-
-
 
   return (
     <MainContainer>

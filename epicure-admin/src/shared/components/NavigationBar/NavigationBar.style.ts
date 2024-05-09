@@ -7,10 +7,12 @@ const drawerWidth = 240;
 export const StyledDrawer = styled(Drawer)(() => ({
   width: drawerWidth,
   flexShrink: 0,
-  "& .MuiDrawer-paper": {
-    width: drawerWidth,
+   "& .MuiDrawer-paper": {
+     width: drawerWidth,
     boxSizing: "border-box",
-  },
+    backgroundColor: colors.lightGray,  
+    
+   },
 }));
 
 export const CollectionTitle = styled(Typography)({

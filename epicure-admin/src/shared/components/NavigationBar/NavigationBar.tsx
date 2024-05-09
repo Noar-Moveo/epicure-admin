@@ -8,6 +8,7 @@ import {
   StyledList,
 } from "./NavigationBar.style";
 import { NavigationBarProps } from "./NavigationBar.type";
+import { capitalizeFirstLetter } from "../../../data/utils/CapitalizeFirstLetter";
 
 const NavigationBar: React.FC<NavigationBarProps> = ({
   collections,
@@ -24,7 +25,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
             key={name}
             onClick={(event) => handleListItemClick(event, name)}
           >
-            <ListItemText primary={name} />
+            <ListItemText primary={capitalizeFirstLetter(name)} />
           </StyledListItemButton>
         ))}
       </StyledList>
