@@ -1,6 +1,6 @@
-import { TableData } from "../Dashboard/Dashboard.type";
+import { ITableData } from "../Dashboard/Dashboard.type";
 
-export interface DynamicTableProps {
+export interface IDynamicTableProps {
   fields: string[];
-  data: TableData[];
+  data: ITableData[];
 }

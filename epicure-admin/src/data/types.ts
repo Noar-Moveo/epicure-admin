@@ -1,16 +1,14 @@
-
-export type CollectionItem = Dish | Chef | Restaurant;
+export type CollectionItem = IDish | IChef | IRestaurant;
 
 export type CollectionItems = CollectionItem[];
 
-export interface Field {
+export interface IField {
   name: string;
   label: string;
   type: string;
 }
 
-
-export interface Dish {
+export interface IDish {
   id: string;
   name: string;
   price: number;
@@ -18,25 +16,24 @@ export interface Dish {
   ingredients: string[];
   tags: string[];
   status: string;
-  restaurant: Restaurant;
+  restaurant: IRestaurant;
 }
 
-export interface Chef {
+export interface IChef {
   id: string;
   name: string;
   image: string;
   description: string;
   status: string;
-  restaurants: Restaurant[];
+  restaurants: IRestaurant[];
 }
 
-export interface Restaurant {
+export interface IRestaurant {
   id: string;
   name: string;
   image: string;
-  chef: Chef;
+  chef: IChef;
   status: string;
   stars: string;
-  dishes: Dish[];
+  dishes: IDish[];
 }
-
