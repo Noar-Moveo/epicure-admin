@@ -20,17 +20,35 @@ import {
 } from "./DynamicTable.style";
 import { IDish, IRestaurant } from "../../../data/types";
 import colors from "../../../data/colors";
-import Delete from "../Action/Delete";
+import Delete from "../Delete/Delete";
 import resources from "../../../resources/resources.json";
 import { ITableData } from "../Dashboard/Dashboard.type";
+import { activatedData } from "../../../services/activated";
+import { fetchData } from "../../../services/fetchData";
+import { deleteData } from "../../../services/delete";
+import Restore from "../Restore/Restore";
+import Edit from "../Edit/Edit";
 
 const DynamicTable: React.FC<IDynamicTableProps> = ({
   fields,
   data,
-  deleteDataCallback,
+  activeTable,
+  BASE_URL,
+  setData,
 }) => {
   const getStatusColor = (status: string) => {
     return status === "active" ? colors.green : colors.red;
+  };
+
+  const renderEditComponent = (item: ITableData) => {
+    return (
+      <Edit
+        activeTable={activeTable}
+        itemId={item._id}
+        BASE_URL={BASE_URL}
+        updateData={() => fetchData(activeTable, setData, BASE_URL)}
+      />
+    );
   };
 
   const renderTableCellContent = (field: string, rowData: ITableData) => {
@@ -89,6 +107,32 @@ const DynamicTable: React.FC<IDynamicTableProps> = ({
     }
   };
 
+  const actionComponent = (item: ITableData) => {
+    if (item.status === "active") {
+      return <Delete item={item} deleteDataCallback={handleDelete} />;
+    } else if (item.status === "deprecated") {
+      return <Restore item={item} restoreDataCallback={handleRestore} />;
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteData(activeTable, id, BASE_URL);
+      await fetchData(activeTable, setData, BASE_URL);
+    } catch (error) {
+      console.error("Error deleting data:", error);
+    }
+  };
+
+  const handleRestore = async (id: string) => {
+    try {
+      await activatedData(activeTable, id, BASE_URL);
+      await fetchData(activeTable, setData, BASE_URL);
+    } catch (error) {
+      console.error("Error deleting data:", error);
+    }
+  };
+
   return (
     <TableContainer component={Paper}>
       <Table sx={tableStyle}>
@@ -100,6 +144,7 @@ const DynamicTable: React.FC<IDynamicTableProps> = ({
               </TableCell>
             ))}
             <TableCell>{resources.Action}</TableCell>
+            <TableCell>{resources.Edit}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -110,9 +155,8 @@ const DynamicTable: React.FC<IDynamicTableProps> = ({
                   {renderTableCellContent(field, row)}
                 </TableCell>
               ))}
-              <TableCell>
-                <Delete item={row} deleteDataCallback={deleteDataCallback} />
-              </TableCell>
+              <TableCell>{actionComponent(row)}</TableCell>
+              {renderEditComponent(row)}
             </TableRow>
           ))}
         </TableBody>

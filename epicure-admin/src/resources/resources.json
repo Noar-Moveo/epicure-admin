@@ -10,5 +10,8 @@
   "ConfirmDelete": "Confirm Deletion",
   "Action": "Action",
   "Yes": "Yes",
-  "No": "No"
+  "No": "No",
+  "ConfirmRestore": "Confirm Restore",
+  "RestoreQuestion": "Are you sure you want to restore this item?",
+  "Edit": "Edit"
 }

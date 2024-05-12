@@ -13,10 +13,12 @@ function AddEntryForm({
   closeModal,
   activeTable,
   updateData,
+  formData: initialFormData = {},
+  handleSubmit,
 }: IAddEntryFormProps) {
   const [formData, setFormData] = useState<{
     [key: string]: string | string[];
-  }>({});
+  }>(initialFormData);
 
   const handleChange =
     (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -27,13 +29,17 @@ function AddEntryForm({
       setFormData({ ...formData, [field]: value });
     };
 
-  const handleSubmit = async () => {
-    try {
-      await postData(activeTable, formData, BASE_URL);
-      closeModal();
-      updateData();
-    } catch (error) {
-      console.error("Error:", error);
+  const handleFormSubmit = async () => {
+    if (handleSubmit) {
+      await handleSubmit(formData);
+    } else {
+      try {
+        await postData(activeTable, formData, BASE_URL);
+        closeModal();
+        updateData();
+      } catch (error) {
+        console.error("Error:", error);
+      }
     }
   };
 
@@ -46,7 +52,12 @@ function AddEntryForm({
       <CloseButton onClick={handleClose}>
         <CloseIcon />
       </CloseButton>
-      <form>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleFormSubmit();
+        }}
+      >
         {fields.map((field) => (
           <TextField
             key={field}
@@ -57,7 +68,7 @@ function AddEntryForm({
             fullWidth
           />
         ))}
-        <Button onClick={handleSubmit}>{resources.Save}</Button>
+        <Button type="submit">{resources.Save}</Button>
       </form>
     </Container>
   );

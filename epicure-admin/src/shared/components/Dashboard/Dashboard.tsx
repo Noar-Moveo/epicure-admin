@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { CssBaseline, Toolbar, Typography, Modal, Button } from "@mui/material";
 import NavigationBar from "../NavigationBar/NavigationBar";
 import DynamicTable from "../DynamicTable/DynamicTable";
@@ -19,14 +19,14 @@ import colors from "../../../data/colors";
 import { useNavigate, useParams } from "react-router-dom";
 import AddEntryForm from "../Add/Add";
 import { ROUTES } from "../../../shared/constants/ROUTES.dashboard";
-import { deleteData } from "../../../services/delete";
+import useModal from "../../hooks/useModal";
 
 export default function Dashboard() {
   const [activeTable, setActiveTable] = useState<string>("");
   const [collections, setCollections] = useState<string[]>([]);
   const [fields, setFields] = useState<string[]>([]);
   const [data, setData] = useState<ITableData[]>([]);
-  const [showModal, setShowModal] = useState(false);
+  const { showModal, openModal, closeModal } = useModal();
   const navigate = useNavigate();
   const params = useParams();
 
@@ -63,28 +63,11 @@ export default function Dashboard() {
     navigate(ROUTES.dashboard);
   };
 
-  const handleOpenModal = () => {
-    setShowModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-  };
-
   const updateData = async () => {
     try {
       await fetchData(activeTable, setData, BASE_URL);
     } catch (error) {
       console.error("Error:", error);
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteData(activeTable, id, BASE_URL);
-      fetchData(activeTable, setData, BASE_URL);
-    } catch (error) {
-      console.error("Error deleting data:", error);
     }
   };
 
@@ -115,7 +98,7 @@ export default function Dashboard() {
               <Button onClick={handleBackButtonClick}>
                 &lt;{resources.Back}
               </Button>
-              <Button onClick={handleOpenModal}>{resources.AddEntry}</Button>
+              <Button onClick={openModal}>{resources.AddEntry}</Button>
             </ToolbarContainer>
             <UpperCaseTypography variant="h4" paragraph>
               {activeTable.toUpperCase()}
@@ -126,7 +109,9 @@ export default function Dashboard() {
             <DynamicTable
               fields={filteredFields}
               data={data}
-              deleteDataCallback={handleDelete}
+              activeTable={activeTable}
+              BASE_URL={BASE_URL}
+              setData={setData}
             />
           </>
         )}
@@ -135,13 +120,13 @@ export default function Dashboard() {
         )}
         <Modal
           open={showModal}
-          onClose={handleCloseModal}
+          onClose={closeModal}
           aria-labelledby="add-entry-modal-title"
           aria-describedby="add-entry-modal-description"
         >
           <AddEntryForm
             fields={filteredFields}
-            closeModal={handleCloseModal}
+            closeModal={closeModal}
             activeTable={activeTable}
             updateData={updateData}
           />
