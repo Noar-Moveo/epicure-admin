@@ -31,3 +31,8 @@ export const flexContainerStyle = {
   display: "flex",
   alignItems: "center",
 };
+export const buttonContainerStyle = {
+  marginBottom: "16px",
+  display: "flex",
+  gap: "8px",
+};

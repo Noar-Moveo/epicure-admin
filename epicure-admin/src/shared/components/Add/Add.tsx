@@ -186,6 +186,7 @@ function AddEntryForm({
                 margin="normal"
                 fullWidth
                 variant="outlined"
+                autoComplete="off"
               />
             );
           }

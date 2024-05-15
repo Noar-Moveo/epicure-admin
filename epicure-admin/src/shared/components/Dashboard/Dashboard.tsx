@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { CssBaseline, Toolbar, Typography, Modal, Button } from "@mui/material";
+import {
+  CssBaseline,
+  Toolbar,
+  Typography,
+  Modal,
+  Button,
+  Box,
+} from "@mui/material";
 import NavigationBar from "../NavigationBar/NavigationBar";
 import DynamicTable from "../DynamicTable/DynamicTable";
 import { fetchCollectionNames } from "../../../services/fetchCollection";
@@ -92,13 +99,23 @@ export default function Dashboard() {
       />
       <MainContent>
         <Toolbar />
+
         {activeTable && (
           <>
             <ToolbarContainer>
               <Button onClick={handleBackButtonClick}>
                 &lt;{resources.Back}
               </Button>
-              <Button onClick={openModal}>{resources.AddEntry}</Button>
+              <Box
+                display="flex"
+                flexDirection="column"
+                alignItems="flex-start"
+              >
+                <Button onClick={openModal}>{resources.AddEntry}</Button>
+                <Button onClick={() => console.log("Upload Images clicked")}>
+                  {resources.UploadImages}
+                </Button>
+              </Box>
             </ToolbarContainer>
             <UpperCaseTypography variant="h4" paragraph>
               {activeTable.toUpperCase()}
@@ -118,6 +135,7 @@ export default function Dashboard() {
         {!activeTable && (
           <Typography paragraph>{resources.selectCollection}</Typography>
         )}
+
         <Modal
           open={showModal}
           onClose={closeModal}

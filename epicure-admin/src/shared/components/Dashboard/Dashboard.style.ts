@@ -7,10 +7,8 @@ export const MainContainer = styled(Box)({
   display: "flex",
 });
 
-export const StyledAppBar = styled(AppBar)(({ theme }) => ({
+export const StyledAppBar = styled(AppBar)(() => ({
   width: `calc(100% - ${drawerWidth}px)`,
-  marginLeft: `${drawerWidth}px`,
-  paddingLeft: theme.spacing(31),
   position: "fixed",
 }));
 

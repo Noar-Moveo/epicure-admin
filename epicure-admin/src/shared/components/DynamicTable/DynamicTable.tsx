@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -7,6 +7,13 @@ import {
   TableHead,
   TableRow,
   Paper,
+  Checkbox,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText,
 } from "@mui/material";
 import { IDynamicTableProps } from "./DynamicTable.type";
 import { capitalizeFirstLetter } from "../../../data/utils/CapitalizeFirstLetter";
@@ -17,6 +24,7 @@ import {
   starsStyle,
   tableStyle,
   flexContainerStyle,
+  buttonContainerStyle,
 } from "./DynamicTable.style";
 import { IDish, IRestaurant } from "../../../data/types";
 import colors from "../../../data/colors";
@@ -29,6 +37,7 @@ import { deleteData } from "../../../services/delete";
 import Restore from "../Restore/Restore";
 import Edit from "../Edit/Edit";
 import { TablePagination } from "@mui/material";
+import SearchBar from "../SearchBar/SearchBar";
 
 const DynamicTable: React.FC<IDynamicTableProps> = ({
   fields,
@@ -39,6 +48,59 @@ const DynamicTable: React.FC<IDynamicTableProps> = ({
 }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [filteredData, setFilteredData] = useState(data);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogAction, setDialogAction] = useState<"delete" | "activate">();
+
+  useEffect(() => {
+    setFilteredData(data);
+  }, [data]);
+
+  const handleSearch = (searchTerm: string) => {
+    let filtered = data;
+    if (searchTerm !== "") {
+      filtered = data.filter((item) => {
+        const searchTermLower = searchTerm.toLowerCase();
+        for (const field in item) {
+          if (field !== "_id") {
+            const fieldValue = item[field];
+            if (Array.isArray(fieldValue)) {
+              for (const element of fieldValue) {
+                if (typeof element === "object") {
+                  if (element.name && typeof element.name === "string") {
+                    const objectNameLower = element.name.toLowerCase();
+                    if (objectNameLower.includes(searchTermLower)) {
+                      return true;
+                    }
+                  }
+                } else if (typeof element === "string") {
+                  const elementLower = element.toLowerCase();
+                  if (elementLower.includes(searchTermLower)) {
+                    return true;
+                  }
+                }
+              }
+            } else if (typeof fieldValue === "object") {
+              if (fieldValue.name && typeof fieldValue.name === "string") {
+                const objectNameLower = fieldValue.name.toLowerCase();
+                if (objectNameLower.includes(searchTermLower)) {
+                  return true;
+                }
+              }
+            } else if (typeof fieldValue === "string") {
+              const fieldValueLower = fieldValue.toLowerCase();
+              if (fieldValueLower.includes(searchTermLower)) {
+                return true;
+              }
+            }
+          }
+        }
+        return false;
+      });
+    }
+    setFilteredData(filtered);
+  };
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -132,70 +194,205 @@ const DynamicTable: React.FC<IDynamicTableProps> = ({
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (ids: string | string[]) => {
     try {
-      await deleteData(activeTable, id, BASE_URL);
+      if (Array.isArray(ids)) {
+        for (const id of ids) {
+          await deleteData(activeTable, id, BASE_URL);
+        }
+      } else {
+        await deleteData(activeTable, ids, BASE_URL);
+      }
       await fetchData(activeTable, setData, BASE_URL);
     } catch (error) {
       console.error("Error deleting data:", error);
     }
   };
 
-  const handleRestore = async (id: string) => {
+  const handleRestore = async (ids: string | string[]) => {
     try {
-      await activatedData(activeTable, id, BASE_URL);
+      if (Array.isArray(ids)) {
+        for (const id of ids) {
+          await activatedData(activeTable, id, BASE_URL);
+        }
+      } else {
+        await activatedData(activeTable, ids, BASE_URL);
+      }
       await fetchData(activeTable, setData, BASE_URL);
     } catch (error) {
-      console.error("Error deleting data:", error);
+      console.error("Error restoring data:", error);
     }
+  };
+
+  const handleSelect = (id: string) => {
+    const selectedIndex = selected.indexOf(id);
+    let newSelected: string[] = [];
+
+    if (selectedIndex === -1) {
+      newSelected = newSelected.concat(selected, id);
+    } else if (selectedIndex === 0) {
+      newSelected = newSelected.concat(selected.slice(1));
+    } else if (selectedIndex === selected.length - 1) {
+      newSelected = newSelected.concat(selected.slice(0, -1));
+    } else if (selectedIndex > 0) {
+      newSelected = newSelected.concat(
+        selected.slice(0, selectedIndex),
+        selected.slice(selectedIndex + 1)
+      );
+    }
+
+    setSelected(newSelected);
+  };
+
+  const isSelected = (id: string) => selected.indexOf(id) !== -1;
+
+  const handleDialogOpen = (action: "delete" | "activate") => {
+    setDialogAction(action);
+    setDialogOpen(true);
+  };
+
+  const handleDialogClose = () => {
+    setDialogOpen(false);
+  };
+
+  const handleDialogConfirm = () => {
+    if (dialogAction === "delete") {
+      handleDelete(selected);
+    } else if (dialogAction === "activate") {
+      handleRestore(selected);
+    }
+    setDialogOpen(false);
   };
 
   return (
-    <TableContainer component={Paper}>
-      <Table sx={tableStyle}>
-        <TableHead>
-          <TableRow>
-            {fields.map((field, index) => (
-              <TableCell key={index} style={tableCellStyle}>
-                {capitalizeFirstLetter(field)}
+    <div>
+      <SearchBar onSearch={handleSearch} />
+      <div style={buttonContainerStyle}>
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={() => handleDialogOpen("delete")}
+          disabled={selected.length === 0}
+        >
+          {resources.DeleteSelected}
+        </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => handleDialogOpen("activate")}
+          disabled={selected.length === 0}
+        >
+          {resources.ActivateSelected}
+        </Button>
+      </div>
+      <TableContainer component={Paper}>
+        <Table sx={tableStyle}>
+          <TableHead>
+            <TableRow>
+              <TableCell padding="checkbox">
+                <Checkbox
+                  indeterminate={
+                    selected.length > 0 && selected.length < data.length
+                  }
+                  checked={data.length > 0 && selected.length === data.length}
+                  onChange={() => {
+                    if (selected.length === data.length) {
+                      setSelected([]);
+                    } else {
+                      setSelected(data.map((item) => item._id));
+                    }
+                  }}
+                />
               </TableCell>
-            ))}
-            <TableCell>{resources.Action}</TableCell>
-            <TableCell>{resources.Edit}</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {(rowsPerPage > 0
-            ? data.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-            : data
-          ).map((row, rowIndex) => (
-            <TableRow key={rowIndex}>
-              {fields.map((field, cellIndex) => (
-                <TableCell key={cellIndex}>
-                  {renderTableCellContent(field, row)}
+              {fields.map((field, index) => (
+                <TableCell key={index} style={tableCellStyle}>
+                  {capitalizeFirstLetter(field)}
                 </TableCell>
               ))}
-              <TableCell>{actionComponent(row)}</TableCell>
-              {renderEditComponent(row)}
+              <TableCell>{resources.Action}</TableCell>
+              <TableCell>{resources.Edit}</TableCell>
             </TableRow>
-          ))}
-          {emptyRows > 0 && (
-            <TableRow style={{ height: 53 * emptyRows }}>
-              <TableCell colSpan={fields.length + 2} />
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-      <TablePagination
-        rowsPerPageOptions={[5, 10, 25]}
-        component="div"
-        count={data.length}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-      />
-    </TableContainer>
+          </TableHead>
+          <TableBody>
+            {(rowsPerPage > 0
+              ? filteredData.slice(
+                  page * rowsPerPage,
+                  page * rowsPerPage + rowsPerPage
+                )
+              : data
+            ).map((row, rowIndex) => {
+              const isItemSelected = isSelected(row._id);
+              return (
+                <TableRow
+                  key={rowIndex}
+                  hover
+                  role="checkbox"
+                  aria-checked={isItemSelected}
+                  selected={isItemSelected}
+                >
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={isItemSelected}
+                      onChange={() => handleSelect(row._id)}
+                      inputProps={{ "aria-labelledby": row._id }}
+                    />
+                  </TableCell>
+                  {fields.map((field, cellIndex) => (
+                    <TableCell key={cellIndex}>
+                      {renderTableCellContent(field, row)}
+                    </TableCell>
+                  ))}
+                  <TableCell>{actionComponent(row)}</TableCell>
+                  <TableCell>{renderEditComponent(row)}</TableCell>
+                </TableRow>
+              );
+            })}
+            {emptyRows > 0 && (
+              <TableRow>
+                <TableCell />
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25]}
+          component="div"
+          count={data.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        />
+      </TableContainer>
+      <Dialog open={dialogOpen} onClose={handleDialogClose}>
+        <DialogTitle>
+          {dialogAction === resources.Delete
+            ? resources.ConfirmDelete
+            : resources.ConfirmRestore}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {dialogAction === resources.Delete
+              ? resources.BatchDeleteQuestion.replace(
+                  "{count}",
+                  selected.length.toString()
+                )
+              : resources.BatchRestoreQuestion.replace(
+                  "{count}",
+                  selected.length.toString()
+                )}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogClose} color="primary">
+            {resources.No}
+          </Button>
+          <Button onClick={handleDialogConfirm} color="error" autoFocus>
+            {resources.Yes}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </div>
   );
 };
 
