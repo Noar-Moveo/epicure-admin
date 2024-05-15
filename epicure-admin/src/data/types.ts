@@ -37,3 +37,5 @@ export interface IRestaurant {
   stars: string;
   dishes: IDish[];
 }
+
+

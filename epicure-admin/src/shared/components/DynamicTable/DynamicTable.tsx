@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Table,
   TableBody,
@@ -28,6 +28,7 @@ import { fetchData } from "../../../services/fetchData";
 import { deleteData } from "../../../services/delete";
 import Restore from "../Restore/Restore";
 import Edit from "../Edit/Edit";
+import { TablePagination } from "@mui/material";
 
 const DynamicTable: React.FC<IDynamicTableProps> = ({
   fields,
@@ -36,8 +37,24 @@ const DynamicTable: React.FC<IDynamicTableProps> = ({
   BASE_URL,
   setData,
 }) => {
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  const handleChangePage = (event: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+  const emptyRows =
+    rowsPerPage - Math.min(rowsPerPage, data.length - page * rowsPerPage);
+
   const getStatusColor = (status: string) => {
-    return status === "active" ? colors.green : colors.red;
+    return status === "Active" ? colors.green : colors.red;
   };
 
   const renderEditComponent = (item: ITableData) => {
@@ -108,9 +125,9 @@ const DynamicTable: React.FC<IDynamicTableProps> = ({
   };
 
   const actionComponent = (item: ITableData) => {
-    if (item.status === "active") {
+    if (item.status === "Active") {
       return <Delete item={item} deleteDataCallback={handleDelete} />;
-    } else if (item.status === "deprecated") {
+    } else if (item.status === "Deprecated") {
       return <Restore item={item} restoreDataCallback={handleRestore} />;
     }
   };
@@ -148,7 +165,10 @@ const DynamicTable: React.FC<IDynamicTableProps> = ({
           </TableRow>
         </TableHead>
         <TableBody>
-          {data.map((row, rowIndex) => (
+          {(rowsPerPage > 0
+            ? data.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+            : data
+          ).map((row, rowIndex) => (
             <TableRow key={rowIndex}>
               {fields.map((field, cellIndex) => (
                 <TableCell key={cellIndex}>
@@ -159,8 +179,22 @@ const DynamicTable: React.FC<IDynamicTableProps> = ({
               {renderEditComponent(row)}
             </TableRow>
           ))}
+          {emptyRows > 0 && (
+            <TableRow style={{ height: 53 * emptyRows }}>
+              <TableCell colSpan={fields.length + 2} />
+            </TableRow>
+          )}
         </TableBody>
       </Table>
+      <TablePagination
+        rowsPerPageOptions={[5, 10, 25]}
+        component="div"
+        count={data.length}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+      />
     </TableContainer>
   );
 };
