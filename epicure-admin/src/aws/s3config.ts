@@ -1,9 +1,12 @@
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 export const fetchImagesFromS3Folder = async (
   bucket: string,
   folder: string
-) => {
+): Promise<string[]> => {
   const s3Client = new S3Client({
     region: "eu-north-1",
     credentials: {
