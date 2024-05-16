@@ -1,21 +1,27 @@
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
 
-const s3Client = new S3Client({
-  region: "eu-north-1",
-  credentials: {
-    accessKeyId: "AKIAZQ3DTA4XWDI3NJMX",
-    secretAccessKey: "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",
-  },
-});
+export const fetchImagesFromS3Folder = async (
+  bucket: string,
+  folder: string
+) => {
+  const s3Client = new S3Client({
+    region: "eu-north-1",
+    credentials: {
+      accessKeyId: process.env.REACT_APP_AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.REACT_APP_AWS_SECRET_ACCESS_KEY!,
+    },
+  });
 
-export async function fetchImagesFromS3(bucketName: string): Promise<string[]> {
+  const params = {
+    Bucket: bucket,
+    Prefix: folder,
+  };
+
   try {
-    const data = await s3Client.send(
-      new ListObjectsV2Command({ Bucket: bucketName })
-    );
-    return data.Contents?.map((item) => item.Key) || [];
+    const data = await s3Client.send(new ListObjectsV2Command(params));
+    return data.Contents.map((item) => item.Key);
   } catch (err) {
-    console.error("Error fetching images from S3", err);
+    console.error("Error fetching images from S3:", err);
     return [];
   }
-}
+};

@@ -5,7 +5,7 @@ import {
   searchBarContainerStyle,
   textFieldStyle,
   buttonStyle,
-} from "./SearchBar.Style";
+} from "./SearchBar.style";
 import { ISearchBarProps } from "./SearchBar.type";
 
 const SearchBar: React.FC<ISearchBarProps> = ({ onSearch }) => {

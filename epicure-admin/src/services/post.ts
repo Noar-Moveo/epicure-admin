@@ -11,7 +11,15 @@ export const postData = async (
       formData
     );
     return response.data;
-  } catch (error) {
-    throw new Error(`Error posting data to ${activeTable}: ${error}`);
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      if (error.response && error.response.data && error.response.data.error) {
+        throw new Error(error.response.data.error);
+      } else {
+        throw new Error(`Error posting data to ${activeTable}: ${error.message}`);
+      }
+    } else {
+      throw new Error(`Error posting data to ${activeTable}: ${String(error)}`);
+    }
   }
 };

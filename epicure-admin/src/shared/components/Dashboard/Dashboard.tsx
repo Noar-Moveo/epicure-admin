@@ -112,9 +112,6 @@ export default function Dashboard() {
                 alignItems="flex-start"
               >
                 <Button onClick={openModal}>{resources.AddEntry}</Button>
-                <Button onClick={() => console.log("Upload Images clicked")}>
-                  {resources.UploadImages}
-                </Button>
               </Box>
             </ToolbarContainer>
             <UpperCaseTypography variant="h4" paragraph>

@@ -20,5 +20,7 @@
   "ActivateSelected": "Activate Selected",
   "DeleteSelected": "Delete Selected",
   "Delete": "delete",
-  "UploadImages": "Upload Images"
+  "UploadImages": "Upload Images",
+  "ErrorAdd": "An error occurred while creating the entry. Please try again.",
+  "Error": "Error"
 }

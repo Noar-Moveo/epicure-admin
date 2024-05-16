@@ -54,7 +54,6 @@ function Edit({
   }, [activeTable, itemId, BASE_URL]);
 
   const handleUpdate = async (formData: FormDataType) => {
-    console.log("Updating with formData:", formData);
     try {
       await updateData(activeTable, itemId, formData, BASE_URL);
       refreshData();
@@ -64,26 +63,37 @@ function Edit({
     }
   };
 
+  const handleFormChange = (newFormData: FormDataType) => {
+    setFormData(newFormData);
+  };
+
   const fieldsToEdit = Object.keys(formData).filter(
     (field) => field !== "_id" && field !== "__v"
   );
 
+  const handleShowModal = () => {
+    refreshData();
+    setShowModal(true);
+  };
+
   return (
     <>
       <TableCell>
-        <IconButton onClick={() => setShowModal(true)}>
+        <IconButton onClick={handleShowModal}>
           <EditIcon style={editStyle.deleteIcon} />
         </IconButton>
       </TableCell>
       <Modal open={showModal} onClose={() => setShowModal(false)}>
-        <AddEntryForm
-          fields={fieldsToEdit}
-          formData={formData}
-          closeModal={() => setShowModal(false)}
-          activeTable={activeTable}
-          updateData={refreshData}
-          handleSubmit={handleUpdate}
-        />
+        <div style={{ padding: "20px" }}>
+          <AddEntryForm
+            fields={fieldsToEdit}
+            formData={formData}
+            closeModal={() => setShowModal(false)}
+            activeTable={activeTable}
+            updateData={handleFormChange}
+            handleSubmit={handleUpdate}
+          />
+        </div>
       </Modal>
     </>
   );

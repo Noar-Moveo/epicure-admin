@@ -12,11 +12,19 @@ export const updateData = async (
       data
     );
     return response.data;
-  } catch (error) {
-    console.error(
-      `Error updating data for ${activeTable} with ID ${itemId}:`,
-      error
-    );
-    throw error;
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      if (error.response && error.response.data && error.response.data.error) {
+        throw new Error(error.response.data.error);
+      } else {
+        throw new Error(
+          `Error updating data to ${activeTable}: ${error.message}`
+        );
+      }
+    } else {
+      throw new Error(
+        `Error updating data to ${activeTable}: ${String(error)}`
+      );
+    }
   }
 };

@@ -15,7 +15,11 @@ export const fetchFields = async (
 
       const fieldsData = response.data;
 
-      setFields(fieldsData);
+      const filteredFields = fieldsData.filter(
+        (field: string) => field !== "_id" && field !== "__v"
+      );
+
+      setFields(filteredFields);
     } catch (error) {
       console.error("Error fetching fields:", error);
     }

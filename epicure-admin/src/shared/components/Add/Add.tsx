@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Button,
   TextField,
@@ -7,6 +7,7 @@ import {
   FormControl,
   Select,
   OutlinedInput,
+  Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { postData } from "../../../services/post";
@@ -17,7 +18,8 @@ import { capitalizeFirstLetter } from "../../../data/utils/CapitalizeFirstLetter
 import resources from "../../../resources/resources.json";
 import { ENUMS } from "./Add.type";
 import { fetchData } from "../../../services/fetchData";
-import { fetchImagesFromS3 } from "../../../aws/s3config";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { fetchImagesFromS3Folder } from "../../../aws/s3config";
 
 function AddEntryForm({
   fields,
@@ -31,7 +33,13 @@ function AddEntryForm({
     [key: string]: string | string[];
   }>(initialFormData);
   const [options, setOptions] = useState<{ [key: string]: any[] }>({});
-  const [images, setImages] = useState<string[]>([]);
+  const [file, setFile] = useState<File | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [starsImages, setStarsImages] = useState<
+    { label: string; value: string }[]
+  >([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const dropdownFields = ["chef", "restaurants", "dishes", "restaurant"];
@@ -53,13 +61,20 @@ function AddEntryForm({
         );
       }
     });
-    fetchImagesFromS3("epicurephotos").then((imageKeys) => {
-      const imageUrls = imageKeys.map((key) => ({
-        label: key,
-        value: `https://epicurephotos.s3.eu-north-1.amazonaws.com/${key}`,
-      }));
-      setImages(imageUrls);
-    });
+
+    const fetchStarsImages = async () => {
+      const images = await fetchImagesFromS3Folder("epicurephotos", "stars/");
+      setStarsImages(
+        images.map((image) => ({
+          label: image.split("/").pop(),
+          value: `https://epicurephotos.s3.eu-north-1.amazonaws.com/${image}`,
+        }))
+      );
+    };
+
+    if (fields.includes("stars")) {
+      fetchStarsImages();
+    }
   }, [fields]);
 
   const handleChange =
@@ -67,23 +82,83 @@ function AddEntryForm({
       let value = event.target.value;
       if (field === "restaurants" || field === "dishes") {
         value = typeof value === "string" ? value.split(",") : value;
+        value = Array.isArray(value)
+          ? value.map(
+              (val) =>
+                options[field].find((option) => option.label === val)?.value
+            )
+          : value;
       } else if (field === "ingredients") {
         value = event.target.value ? [event.target.value] : [""];
+      } else {
+        value =
+          options[field]?.find((option) => option.label === value)?.value ||
+          value;
       }
       setFormData({ ...formData, [field]: value });
     };
 
-  const handleFormSubmit = async () => {
-    if (handleSubmit) {
-      await handleSubmit(formData);
-    } else {
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (event.target.files && event.target.files[0]) {
+      const selectedFile = event.target.files[0];
+      setFile(selectedFile);
+
+      setIsUploading(true);
+      const s3Client = new S3Client({
+        region: "eu-north-1",
+        credentials: {
+          accessKeyId: "AKIAZQ3DTA4XWDI3NJMX",
+          secretAccessKey: "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",
+        },
+      });
+
+      const params = {
+        Bucket: "epicurephotos",
+        Key: `Images/${selectedFile.name}`,
+        Body: selectedFile,
+        ContentType: selectedFile.type,
+      };
+
       try {
+        await s3Client.send(new PutObjectCommand(params));
+        const uploadedImageUrl = `https://epicurephotos.s3.eu-north-1.amazonaws.com/Images/${selectedFile.name}`;
+        setImageUrl(uploadedImageUrl);
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          image: uploadedImageUrl,
+        }));
+      } catch (err) {
+        console.error("Error uploading image:", err);
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
+  const handleFormSubmit = async () => {
+    if (file && !imageUrl) {
+      console.error("Image upload failed or is not yet completed.");
+      return;
+    }
+
+    try {
+      if (handleSubmit) {
+        await handleSubmit(formData);
+      } else {
         await postData(activeTable, formData, BASE_URL);
         closeModal();
         updateData();
         setFormData({});
-      } catch (error) {
-        console.error("Error:", error);
+        setError(null);
+      }
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Error adding entry:", error.message);
+        setError(error.message || resources.ErrorAdd);
+      } else {
+        setError(resources.ErrorAdd);
       }
     }
   };
@@ -129,6 +204,16 @@ function AddEntryForm({
             );
           } else if (options[field]) {
             const isMultiple = field === "restaurants" || field === "dishes";
+            const selectedValues = formData[field]
+              ? (Array.isArray(formData[field])
+                  ? formData[field]
+                  : [formData[field]]
+                ).map(
+                  (id: string) =>
+                    options[field].find((option) => option.value === id)
+                      ?.label || id
+                )
+              : [];
             return (
               <FormControl
                 fullWidth
@@ -139,7 +224,7 @@ function AddEntryForm({
                 <InputLabel>{label}</InputLabel>
                 <Select
                   multiple={isMultiple}
-                  value={formData[field] || (isMultiple ? [] : "")}
+                  value={selectedValues}
                   onChange={handleChange(field)}
                   renderValue={(selected) =>
                     Array.isArray(selected) ? selected.join(", ") : selected
@@ -147,14 +232,14 @@ function AddEntryForm({
                   input={<OutlinedInput label={label} />}
                 >
                   {options[field].map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
+                    <MenuItem key={option.value} value={option.label}>
                       {option.label}
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
             );
-          } else if (field === "image" || field === "stars") {
+          } else if (field === "stars") {
             return (
               <FormControl
                 fullWidth
@@ -168,13 +253,30 @@ function AddEntryForm({
                   value={formData[field] || ""}
                   onChange={handleChange(field)}
                 >
-                  {images.map((image) => (
+                  {starsImages.map((image) => (
                     <MenuItem key={image.value} value={image.value}>
                       {image.label}
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
+            );
+          } else if (field === "image") {
+            return (
+              <div key={field}>
+                <InputLabel>{label}</InputLabel>
+                <input type="file" onChange={handleFileChange} />
+                {isUploading && <p>Uploading...</p>}
+                {imageUrl && (
+                  <div>
+                    <img
+                      src={imageUrl}
+                      alt="Uploaded"
+                      style={{ marginTop: "10px", maxWidth: "100px" }}
+                    />
+                  </div>
+                )}
+              </div>
             );
           } else {
             return (
@@ -191,7 +293,14 @@ function AddEntryForm({
             );
           }
         })}
-        <Button type="submit">{resources.Save}</Button>
+        {error && (
+          <Typography color="error" variant="body2" gutterBottom>
+            {error}
+          </Typography>
+        )}
+        <Button type="submit" disabled={isUploading}>
+          {resources.Save}
+        </Button>
       </form>
     </Container>
   );
