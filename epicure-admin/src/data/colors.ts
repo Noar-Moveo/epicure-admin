@@ -10,6 +10,7 @@ const colors = {
   red: "#FF0000",
   lightblue: "lightblue",
   textSecondary: "#616161",
+  blue: "#1976d2",
 };
 
 export default colors;

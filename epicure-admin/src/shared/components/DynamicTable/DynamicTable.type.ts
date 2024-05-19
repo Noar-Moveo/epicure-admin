@@ -1,6 +1,10 @@
-import { TableData } from "../Dashboard/Dashboard.type";
+import { ITableData } from "../Dashboard/Dashboard.type";
+import { Dispatch, SetStateAction } from "react";
 
-export interface DynamicTableProps {
+export interface IDynamicTableProps {
   fields: string[];
-  data: TableData[];
+  data: ITableData[];
+  activeTable: string;
+  BASE_URL: string;
+  setData: Dispatch<SetStateAction<ITableData[]>>;
 }

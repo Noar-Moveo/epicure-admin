@@ -12,7 +12,14 @@ export const fetchFields = async (
       const response = await axios.get(
         `${BASE_URL}/fields/${activeTable.toLowerCase()}`
       );
-      setFields(response.data);
+
+      const fieldsData = response.data;
+
+      const filteredFields = fieldsData.filter(
+        (field: string) => field !== "_id" && field !== "__v"
+      );
+
+      setFields(filteredFields);
     } catch (error) {
       console.error("Error fetching fields:", error);
     }

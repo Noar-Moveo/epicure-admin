@@ -1,5 +1,7 @@
+import colors from "../../../data/colors";
+
 export const tableCellStyle = {
-  color: "black",
+  color: colors.black,
 };
 
 export const tableStyle = {
@@ -27,5 +29,10 @@ export const starsStyle = {
 
 export const flexContainerStyle = {
   display: "flex",
-  alignItems: "center"
+  alignItems: "center",
+};
+export const buttonContainerStyle = {
+  marginBottom: "16px",
+  display: "flex",
+  gap: "8px",
 };

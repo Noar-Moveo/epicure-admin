@@ -1,31 +1,39 @@
-import React, { useState, useEffect } from "react";
-import { CssBaseline, Toolbar, Typography, Button } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import {
+  CssBaseline,
+  Toolbar,
+  Typography,
+  Modal,
+  Button,
+  Box,
+} from "@mui/material";
 import NavigationBar from "../NavigationBar/NavigationBar";
 import DynamicTable from "../DynamicTable/DynamicTable";
 import { fetchCollectionNames } from "../../../services/fetchCollection";
 import { BASE_URL } from "../../constants/constants";
 import { fetchFields } from "../../../services/fetchFields";
 import { fetchData } from "../../../services/fetchData";
-import {
-  dashboardTitle,
-  entries,
-  selectCollection,
-} from "../../../resources/resources";
+import resources from "../../../resources/resources.json";
 import {
   MainContainer,
   StyledAppBar,
   MainContent,
   UpperCaseTypography,
+  ToolbarContainer,
 } from "./Dashboard.style";
-import { TableData } from "./Dashboard.type";
+import { ITableData } from "./Dashboard.type";
 import colors from "../../../data/colors";
 import { useNavigate, useParams } from "react-router-dom";
+import AddEntryForm from "../Add/Add";
+import { ROUTES } from "../../../shared/constants/ROUTES.dashboard";
+import useModal from "../../hooks/useModal";
 
 export default function Dashboard() {
   const [activeTable, setActiveTable] = useState<string>("");
   const [collections, setCollections] = useState<string[]>([]);
   const [fields, setFields] = useState<string[]>([]);
-  const [data, setData] = useState<TableData[]>([]);
+  const [data, setData] = useState<ITableData[]>([]);
+  const { showModal, openModal, closeModal } = useModal();
   const navigate = useNavigate();
   const params = useParams();
 
@@ -55,14 +63,24 @@ export default function Dashboard() {
     collection: string
   ) => {
     setActiveTable(collection);
-    navigate(`/dashboard/${collection}`);
-    console.log("Navigate to Collection");
+    navigate(`${ROUTES.dashboard}/${collection}`);
   };
 
   const handleBackButtonClick = () => {
-    navigate("/dashboard/");
-    console.log("Navigate to Dashboard");
+    navigate(ROUTES.dashboard);
   };
+
+  const updateData = async () => {
+    try {
+      await fetchData(activeTable, setData, BASE_URL);
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  const filteredFields = fields.filter(
+    (field) => field !== "_id" && field !== "__v"
+  );
 
   return (
     <MainContainer>
@@ -70,7 +88,7 @@ export default function Dashboard() {
       <StyledAppBar>
         <Toolbar>
           <Typography variant="h6" noWrap component="div">
-            {dashboardTitle}{" "}
+            {resources.dashboardTitle}
           </Typography>
         </Toolbar>
       </StyledAppBar>
@@ -81,19 +99,53 @@ export default function Dashboard() {
       />
       <MainContent>
         <Toolbar />
+
         {activeTable && (
           <>
-            <Button onClick={handleBackButtonClick}>&lt;- Back</Button>
+            <ToolbarContainer>
+              <Button onClick={handleBackButtonClick}>
+                &lt;{resources.Back}
+              </Button>
+              <Box
+                display="flex"
+                flexDirection="column"
+                alignItems="flex-start"
+              >
+                <Button onClick={openModal}>{resources.AddEntry}</Button>
+              </Box>
+            </ToolbarContainer>
             <UpperCaseTypography variant="h4" paragraph>
               {activeTable.toUpperCase()}
             </UpperCaseTypography>
             <Typography paragraph style={{ color: colors.textSecondary }}>
-              {data.length} {entries}
+              {data.length} {resources.entries}
             </Typography>
-            <DynamicTable fields={fields} data={data} />
+            <DynamicTable
+              fields={filteredFields}
+              data={data}
+              activeTable={activeTable}
+              BASE_URL={BASE_URL}
+              setData={setData}
+            />
           </>
         )}
-        {!activeTable && <Typography paragraph>{selectCollection} </Typography>}
+        {!activeTable && (
+          <Typography paragraph>{resources.selectCollection}</Typography>
+        )}
+
+        <Modal
+          open={showModal}
+          onClose={closeModal}
+          aria-labelledby="add-entry-modal-title"
+          aria-describedby="add-entry-modal-description"
+        >
+          <AddEntryForm
+            fields={filteredFields}
+            closeModal={closeModal}
+            activeTable={activeTable}
+            updateData={updateData}
+          />
+        </Modal>
       </MainContent>
     </MainContainer>
   );
